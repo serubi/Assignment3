@@ -12,7 +12,11 @@ namespace Assignment3
             server.Start();
             Console.WriteLine("Server has started...");
 
-
+            while(true)
+            {
+                server.AcceptTcpClient();
+                Console.WriteLine("Client connected...");
+            }
         }
     }
 }
