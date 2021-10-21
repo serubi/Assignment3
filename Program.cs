@@ -14,30 +14,43 @@ namespace Assignment3
             server.Start();
             Console.WriteLine("Server has started...");
 
-            while(true)
+            var buffer = new byte[1024];
+
+            while (true)
             {
                 var client = server.AcceptTcpClient();
                 Console.WriteLine("Client connected...");
 
-                var stream = client.GetStream();
-
-                var buffer = new byte[2048];
-
-                if(stream.DataAvailable)
-                {
+                try { 
+                    var stream = client.GetStream();
                     var rdCnt = stream.Read(buffer);
-
                     var json = Encoding.UTF8.GetString(buffer, 0, rdCnt);
 
                     Console.WriteLine("Client payload: " + json);
-                    //Console.WriteLine($"Read count was {rdCnt}");
 
                     var payload = JsonSerializer.Deserialize<Payload>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); // Second parameter ensures that it is case insensitive
 
-                    var response = new Response("Missing method", "Test");
+                    var response = new Response();
+
+                    if (payload.Method == null)
+                    {
+                        Console.WriteLine("Missing method");
+                        response.Status = "Missing method";
+                    }
+
+                    if (payload.Method == "xxxx")
+                    {
+                        Console.WriteLine("Illegal method");
+                        response.Status = "Illegal method";
+                    }
+
                     var jsonResponse = JsonSerializer.Serialize(response);
                     var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
                     stream.Write(responseBytes);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("SocketException: {0}", e);
                 }
             }
         }
@@ -56,10 +69,10 @@ namespace Assignment3
         public string Status { get; set; }
         public string Body { get; set; }
 
-        public Response(string StatusText, string BodyText)
-        {
-            Status = StatusText;
-            Body = BodyText;
-        }
+        //public Response(string StatusText, string BodyText)
+        //{
+        //    Status = StatusText;
+        //    Body = BodyText;
+        //}
     }
 }
