@@ -23,19 +23,22 @@ namespace Assignment3
 
                 var buffer = new byte[2048];
 
-                var rdCnt = stream.Read(buffer);
+                if(stream.DataAvailable)
+                {
+                    var rdCnt = stream.Read(buffer);
 
-                var json = Encoding.UTF8.GetString(buffer, 0, rdCnt);
+                    var json = Encoding.UTF8.GetString(buffer, 0, rdCnt);
 
-                Console.WriteLine("Client says: " + json);
-                //Console.WriteLine($"Read count was {rdCnt}");
+                    Console.WriteLine("Client payload: " + json);
+                    //Console.WriteLine($"Read count was {rdCnt}");
 
-                var payload = JsonSerializer.Deserialize<Payload>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); // Second parameter ensures that it is case insensitive
-                
-                var response = new Response("Missing method", "Test");
-                var jsonResponse = JsonSerializer.Serialize(response);
-                var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
-                stream.Write(responseBytes);
+                    var payload = JsonSerializer.Deserialize<Payload>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); // Second parameter ensures that it is case insensitive
+
+                    var response = new Response("Missing method", "Test");
+                    var jsonResponse = JsonSerializer.Serialize(response);
+                    var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
+                    stream.Write(responseBytes);
+                }
             }
         }
     }
