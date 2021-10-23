@@ -41,6 +41,7 @@ namespace Assignment3
                     {
                         Console.WriteLine("Missing method");
                         response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing method";
+                        payload.Method = "";
                     } else
                     {
                         var protocolMethod = new Transformer(Create);
@@ -79,15 +80,17 @@ namespace Assignment3
                         }
                         else
                         {
-                            switch (payload.Path.ToLower())
+                            var pathArray = payload.Path.Split('/'); // first index will be empty, because the path starts with /
+                            if (pathArray.Length < 2)
                             {
-                                case "test":
+                                Console.WriteLine("Illegal resource");
+                                response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal resource";
+                            }
 
-                                    break;
-                                default:
-                                    Console.WriteLine("Illegal resource");
-                                    response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal resource";
-                                    break;
+                            if (pathArray[1] != "api" || pathArray[2] != "categories" || (pathArray.Length >= 4 && !int.TryParse(pathArray[3], out int CID)) || (pathArray.Length >= 4 && payload.Method.ToLower() == "create") || (pathArray.Length <= 3 && (payload.Method.ToLower() == "update" || payload.Method.ToLower() == "delete")))
+                            {
+                                Console.WriteLine("Bad Request");
+                                response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Bad Request";
                             }
                         }
                     }
@@ -105,23 +108,27 @@ namespace Assignment3
                     }
 
                     // Check payload for valid Body
-                    if (payload.Body == null)
+                    if (payload.Method.ToLower() != "read" && payload.Method.ToLower() != "delete")
                     {
-                        Console.WriteLine("Missing body");
-                        response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing body";
-                    } else
-                    {
-                        if (payload.Method.ToLower() != "echo")
+                        if (payload.Body == null)
                         {
-                            // Validate that the payload body is json
-                            try
+                            Console.WriteLine("Missing body");
+                            response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing body";
+                        }
+                        else
+                        {
+                            if (payload.Method.ToLower() != "echo")
                             {
-                                JsonDocument.Parse(payload.Body);
-                            }
-                            catch (JsonException)
-                            {
-                                Console.WriteLine("Illegal body");
-                                response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal body";
+                                // Validate that the payload body is json
+                                try
+                                {
+                                    JsonDocument.Parse(payload.Body);
+                                }
+                                catch (JsonException)
+                                {
+                                    Console.WriteLine("Illegal body");
+                                    response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal body";
+                                }
                             }
                         }
                     }
@@ -172,5 +179,11 @@ namespace Assignment3
         //    Status = StatusText;
         //    Body = BodyText;
         //}
+    }
+
+    class Category
+    {
+        public int CID { get; set; }
+        public string Name { get; set; }
     }
 }
