@@ -17,7 +17,7 @@ namespace Assignment3
             server.Start();
             Console.WriteLine("Server has started...");
 
-            var buffer = new byte[1024];
+            var buffer = new byte[2048];
 
             while (true)
             {
@@ -50,6 +50,18 @@ namespace Assignment3
                             case "create":
                                 protocolMethod = new Transformer(Create);
                                 break;
+                            case "read":
+                                protocolMethod = new Transformer(Create);
+                                break;
+                            case "update":
+                                protocolMethod = new Transformer(Create);
+                                break;
+                            case "delete":
+                                protocolMethod = new Transformer(Create);
+                                break;
+                            case "echo":
+                                protocolMethod = new Transformer(Create);
+                                break;
                             default:
                                 Console.WriteLine("Illegal method");
                                 response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal method";
@@ -58,22 +70,25 @@ namespace Assignment3
                     }
 
                     // Check payload for valid Path
-                    if (payload.Path == null)
+                    if (payload.Method.ToLower() != "echo")
                     {
-                        Console.WriteLine("Missing resource");
-                        response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing resource";
-                    }
-                    else
-                    {
-                        switch (payload.Path.ToLower())
+                        if (payload.Path == null)
                         {
-                            case "test":
+                            Console.WriteLine("Missing resource");
+                            response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing resource";
+                        }
+                        else
+                        {
+                            switch (payload.Path.ToLower())
+                            {
+                                case "test":
 
-                                break;
-                            default:
-                                Console.WriteLine("Illegal resource");
-                                response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal resource";
-                                break;
+                                    break;
+                                default:
+                                    Console.WriteLine("Illegal resource");
+                                    response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal resource";
+                                    break;
+                            }
                         }
                     }
 
@@ -87,6 +102,38 @@ namespace Assignment3
                     {
                         Console.WriteLine("Illegal date");
                         response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal date";
+                    }
+
+                    // Check payload for valid Body
+                    if (payload.Body == null)
+                    {
+                        Console.WriteLine("Missing body");
+                        response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Missing body";
+                    } else
+                    {
+                        if (payload.Method.ToLower() != "echo")
+                        {
+                            // Validate that the payload body is json
+                            try
+                            {
+                                JsonDocument.Parse(payload.Body);
+                            }
+                            catch (JsonException)
+                            {
+                                Console.WriteLine("Illegal body");
+                                response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal body";
+                            }
+                        }
+                    }
+
+                    if (response.Status == "")
+                    {
+                        // No previous status was supplied, so assume everything is good to proceed
+                        if (payload.Method.ToLower() == "echo")
+                        {
+                            response.Status = "1 Ok";
+                            response.Body = payload.Body;
+                        }
                     }
 
                     var jsonResponse = JsonSerializer.Serialize(response);
