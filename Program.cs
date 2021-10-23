@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Assignment3
 {
@@ -12,6 +14,13 @@ namespace Assignment3
 
         static void Main(string[] args)
         {
+            var categories = new List<Category>
+            {
+                new Category{CID = 1, Name = "Beverages"},
+                new Category{CID = 2, Name = "Condiments"},
+                new Category{CID = 3, Name = "Confections"}
+            };
+
             //var validMethods = ["create", "read", "update", "delete", "echo"];
             var server = new TcpListener(IPAddress.Loopback, 5000);
             server.Start();
@@ -31,7 +40,7 @@ namespace Assignment3
 
                     Console.WriteLine("Client payload: " + json);
 
-                    var payload = JsonSerializer.Deserialize<Payload>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); // Second parameter ensures that it is case insensitive
+                    var payload = JsonSerializer.Deserialize<Payload>(json); // Second parameter ensures that it is case insensitive
 
                     var response = new Response();
                     response.Status = "";
@@ -85,9 +94,7 @@ namespace Assignment3
                             {
                                 Console.WriteLine("Illegal resource");
                                 response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal resource";
-                            }
-
-                            if (pathArray[1] != "api" || pathArray[2] != "categories" || (pathArray.Length >= 4 && !int.TryParse(pathArray[3], out int CID)) || (pathArray.Length >= 4 && payload.Method.ToLower() == "create") || (pathArray.Length <= 3 && (payload.Method.ToLower() == "update" || payload.Method.ToLower() == "delete")))
+                            } else if (pathArray[1] != "api" || pathArray[2] != "categories" || (pathArray.Length >= 4 && !int.TryParse(pathArray[3], out int CID)) || (pathArray.Length >= 4 && payload.Method.ToLower() == "create") || (pathArray.Length <= 3 && (payload.Method.ToLower() == "update" || payload.Method.ToLower() == "delete")))
                             {
                                 Console.WriteLine("Bad Request");
                                 response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Bad Request";
@@ -107,7 +114,7 @@ namespace Assignment3
                         response.Status += (response.Status.Length == 0 ? "4 " : ", ") + "Illegal date";
                     }
 
-                    // Check payload for valid Body
+                    // Check payload for valid Body, except if method is read or delete
                     if (payload.Method.ToLower() != "read" && payload.Method.ToLower() != "delete")
                     {
                         if (payload.Body == null)
@@ -140,11 +147,39 @@ namespace Assignment3
                         {
                             response.Status = "1 Ok";
                             response.Body = payload.Body;
+                        } else if (payload.Method.ToLower() == "read")
+                        {
+                            var pathArray = payload.Path.Split('/'); // first index will be empty, because the path starts with /
+
+                            if (pathArray.Length >= 4)
+                            {
+                                // Return individual category, since cid is provided
+                                foreach (var category in categories)
+                                {
+                                    if (category.CID == int.Parse(pathArray[3]))
+                                    {
+                                        response.Status = "1 Ok";
+                                        response.Body = JsonSerializer.Serialize(category);
+                                        break;
+                                    }
+                                }
+
+                                if (response.Status == "")
+                                {
+                                    // No category with that id was found
+                                    response.Status = "5 Not found";
+                                }
+                            } else
+                            {
+                                response.Status = "1 Ok";
+                                // Return all categories, since no cid is provided
+                                response.Body = JsonSerializer.Serialize(categories);
+                            }
                         }
                     }
 
                     var jsonResponse = JsonSerializer.Serialize(response);
-                    Console.WriteLine(jsonResponse);
+                    Console.WriteLine("Server response: " + jsonResponse);
                     var responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
                     stream.Write(responseBytes);
                 }
@@ -163,15 +198,21 @@ namespace Assignment3
 
     class Payload
     {
+        [JsonPropertyName("method")]
         public string Method { get; set; }
+        [JsonPropertyName("path")]
         public string Path { get; set; }
+        [JsonPropertyName("date")]
         public string Date { get; set; }
+        [JsonPropertyName("body")]
         public string Body { get; set; }
     }
 
     class Response
     {
+        [JsonPropertyName("status")]
         public string Status { get; set; }
+        [JsonPropertyName("body")]
         public string Body { get; set; }
 
         //public Response(string StatusText, string BodyText)
@@ -183,7 +224,9 @@ namespace Assignment3
 
     class Category
     {
+        [JsonPropertyName("cid")]
         public int CID { get; set; }
+        [JsonPropertyName("name")]
         public string Name { get; set; }
     }
 }
