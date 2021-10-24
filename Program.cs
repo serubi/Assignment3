@@ -276,12 +276,6 @@ namespace Assignment3
         public string Status { get; set; }
         [JsonPropertyName("body")]
         public string Body { get; set; }
-
-        //public Response(string StatusText, string BodyText)
-        //{
-        //    Status = StatusText;
-        //    Body = BodyText;
-        //}
     }
 
     class Category
