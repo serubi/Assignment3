@@ -142,15 +142,16 @@ namespace Assignment3
 
                     if (response.Status == "")
                     {
+                        var pathArray = payload.Path.Split('/'); // first index will be empty, because the path starts with /
+
                         // No previous status was supplied, so assume everything is good to proceed
                         if (payload.Method.ToLower() == "echo")
                         {
                             response.Status = "1 Ok";
                             response.Body = payload.Body;
-                        } else if (payload.Method.ToLower() == "read")
+                        }
+                        else if (payload.Method.ToLower() == "read")
                         {
-                            var pathArray = payload.Path.Split('/'); // first index will be empty, because the path starts with /
-
                             if (pathArray.Length >= 4)
                             {
                                 // Return individual category, since cid is provided
@@ -174,6 +175,36 @@ namespace Assignment3
                                 response.Status = "1 Ok";
                                 // Return all categories, since no cid is provided
                                 response.Body = JsonSerializer.Serialize(categories);
+                            }
+                        }
+                        else if (payload.Method.ToLower() == "update")
+                        {
+                            if (pathArray.Length >= 4)
+                            {
+                                // Return individual category, since cid is provided
+                                foreach (var category in categories)
+                                {
+                                    if (category.CID == int.Parse(pathArray[3]))
+                                    {
+                                        var updatedCategory = JsonSerializer.Deserialize<Category>(payload.Body);
+                                        category.Name = updatedCategory.Name;
+                                        response.Status = "3 Updated";
+                                        response.Body = JsonSerializer.Serialize(category);
+                                        break;
+                                    }
+                                }
+
+                                if (response.Status == "")
+                                {
+                                    // No category with that id was found
+                                    response.Status = "5 Not found";
+                                }
+                            }
+                            else
+                            {
+                                //response.Status = "1 Ok";
+                                //// Return all categories, since no cid is provided
+                                //response.Body = JsonSerializer.Serialize(categories);
                             }
                         }
                     }
