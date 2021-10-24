@@ -34,7 +34,7 @@ namespace Assignment3
                 var client = server.AcceptTcpClient();
                 Console.WriteLine("Client connected...");
 
-                try { 
+                try {
                     var stream = client.GetStream();
                     var rdCnt = stream.Read(buffer);
                     var json = Encoding.UTF8.GetString(buffer, 0, rdCnt);
@@ -247,7 +247,7 @@ namespace Assignment3
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("SocketException: {0}", e);
+                    //Console.WriteLine("SocketException: {0}", e);
                 }
             }
         }
