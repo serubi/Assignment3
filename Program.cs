@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -142,6 +143,7 @@ namespace Assignment3
 
                     if (response.Status == "")
                     {
+                        if (payload.Path == null) payload.Path = "";
                         var pathArray = payload.Path.Split('/'); // first index will be empty, because the path starts with /
 
                         // No previous status was supplied, so assume everything is good to proceed
@@ -202,9 +204,38 @@ namespace Assignment3
                             }
                             else
                             {
-                                //response.Status = "1 Ok";
-                                //// Return all categories, since no cid is provided
-                                //response.Body = JsonSerializer.Serialize(categories);
+                                // No category ID was provided
+                                response.Status = "4 Bad Request";
+                            }
+                        }
+                        else if (payload.Method.ToLower() == "create")
+                        {
+                            var newCategory = JsonSerializer.Deserialize<Category>(payload.Body);
+                            newCategory.CID = categories.LastOrDefault().CID + 1;
+                            categories.Add(newCategory);
+                            response.Status = "2 Created";
+                            response.Body = JsonSerializer.Serialize(newCategory);
+                        }
+                        else if (payload.Method.ToLower() == "delete")
+                        {
+                            if (pathArray.Length >= 4)
+                            {
+                                // Return individual category, since cid is provided
+                                foreach (var category in categories)
+                                {
+                                    if (category.CID == int.Parse(pathArray[3]))
+                                    {
+                                        categories.Remove(category);
+                                        response.Status = "1 OK";
+                                        break;
+                                    }
+                                }
+
+                                if (response.Status == "")
+                                {
+                                    // No category with that id was found
+                                    response.Status = "5 Not found";
+                                }
                             }
                         }
                     }
