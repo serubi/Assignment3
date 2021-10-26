@@ -26,7 +26,7 @@ namespace Assignment3
             //var validMethods = ["create", "read", "update", "delete", "echo"];
             var server = new TcpListener(IPAddress.Loopback, 5000);
             server.Start();
-            Console.WriteLine("Server has started..");
+            Console.WriteLine("Server has started.");
 
             var buffer = new byte[2048];
 
